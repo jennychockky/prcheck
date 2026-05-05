@@ -1,3 +1,12 @@
+export interface PRContext {
+  title: string;
+  body: string;
+  labels: string[];
+  number: number;
+  owner: string;
+  repo: string;
+}
+
 export interface CheckResult {
   name: string;
   passed: boolean;
@@ -5,18 +14,14 @@ export interface CheckResult {
 }
 
 export interface Config {
-  templatePath: string;
-  requiredLabels: string[];
+  templatePath?: string;
+  requireLabels?: boolean;
+  requiredLabels?: string[];
   titlePattern?: string;
-  failOnMissingTemplate: boolean;
+  failFast?: boolean;
 }
 
-export interface PRContext {
-  title: string;
-  description: string;
-  labels: string[];
-  author: string;
-  number: number;
-  repo: string;
-  owner: string;
+export interface ReportOptions {
+  writeSummary?: boolean;
+  failOnError?: boolean;
 }
