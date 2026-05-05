@@ -1,38 +1,43 @@
+import * as fs from 'fs';
 import * as core from '@actions/core';
+import * as yaml from 'js-yaml';
 
-export interface PRCheckConfig {
-  requiredLabels: string[];
-  labelMatchMode: 'all' | 'any';
+export interface PrCheckConfig {
   templatePath: string;
-  requiredSections: string[];
+  requiredLabels: string[];
   failOnMissingTemplate: boolean;
+  failOnMissingLabels: boolean;
 }
 
-export function loadConfig(): PRCheckConfig {
-  const requiredLabelsInput = core.getInput('required_labels');
-  const requiredLabels = requiredLabelsInput
-    ? requiredLabelsInput.split(',').map((l) => l.trim()).filter(Boolean)
-    : [];
+const DEFAULTS: PrCheckConfig = {
+  templatePath: '.github/pull_request_template.md',
+  requiredLabels: [],
+  failOnMissingTemplate: true,
+  failOnMissingLabels: true,
+};
 
-  const labelMatchMode = core.getInput('label_match_mode') || 'any';
-  if (labelMatchMode !== 'all' && labelMatchMode !== 'any') {
-    throw new Error(`Invalid label_match_mode: "${labelMatchMode}". Must be "all" or "any".`);
+export function loadConfig(configPath?: string): PrCheckConfig {
+  const resolvedPath = configPath ?? '.github/prcheck.yml';
+
+  if (!fs.existsSync(resolvedPath)) {
+    core.debug(`Config file not found at ${resolvedPath}, using defaults.`);
+    return { ...DEFAULTS };
   }
 
-  const templatePath = core.getInput('template_path') || '.github/PULL_REQUEST_TEMPLATE.md';
+  try {
+    const raw = fs.readFileSync(resolvedPath, 'utf8');
+    const parsed = yaml.load(raw) as Partial<PrCheckConfig>;
 
-  const requiredSectionsInput = core.getInput('required_sections');
-  const requiredSections = requiredSectionsInput
-    ? requiredSectionsInput.split(',').map((s) => s.trim()).filter(Boolean)
-    : [];
-
-  const failOnMissingTemplate = core.getInput('fail_on_missing_template') !== 'false';
-
-  return {
-    requiredLabels,
-    labelMatchMode: labelMatchMode as 'all' | 'any',
-    templatePath,
-    requiredSections,
-    failOnMissingTemplate,
-  };
+    return {
+      templatePath: parsed.templatePath ?? DEFAULTS.templatePath,
+      requiredLabels: parsed.requiredLabels ?? DEFAULTS.requiredLabels,
+      failOnMissingTemplate:
+        parsed.failOnMissingTemplate ?? DEFAULTS.failOnMissingTemplate,
+      failOnMissingLabels:
+        parsed.failOnMissingLabels ?? DEFAULTS.failOnMissingLabels,
+    };
+  } catch (err) {
+    core.warning(`Failed to parse config at ${resolvedPath}: ${err}. Using defaults.`);
+    return { ...DEFAULTS };
+  }
 }
