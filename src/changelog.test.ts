@@ -45,6 +45,11 @@ describe('parseChangelog', () => {
   it('returns empty array for empty input', () => {
     expect(parseChangelog('')).toEqual([]);
   });
+
+  it('parses unreleased section items correctly', () => {
+    const entries = parseChangelog(sampleChangelog);
+    expect(entries[0].sections['Added']).toEqual(['New feature X', 'Support for Y']);
+  });
 });
 
 describe('getLatestEntry', () => {
@@ -68,5 +73,9 @@ describe('hasUnreleasedChanges', () => {
   it('returns false when no unreleased section', () => {
     const entries = parseChangelog('## [1.0.0] - 2024-01-01\n### Added\n- Initial release\n');
     expect(hasUnreleasedChanges(entries)).toBe(false);
+  });
+
+  it('returns false for empty entries', () => {
+    expect(hasUnreleasedChanges([])).toBe(false);
   });
 });
