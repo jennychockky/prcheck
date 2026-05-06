@@ -28,6 +28,14 @@ describe('loadConfig', () => {
     expect(config.requiredLabels).toEqual(['bug', 'enhancement', 'ready']);
   });
 
+  it('trims whitespace from required_labels entries', () => {
+    mockGetInput.mockImplementation((key) =>
+      key === 'required_labels' ? '  bug  ,  enhancement  ' : ''
+    );
+    const config = loadConfig();
+    expect(config.requiredLabels).toEqual(['bug', 'enhancement']);
+  });
+
   it('sets labelMatchMode to all when specified', () => {
     mockGetInput.mockImplementation((key) =>
       key === 'label_match_mode' ? 'all' : ''
@@ -57,5 +65,13 @@ describe('loadConfig', () => {
     );
     const config = loadConfig();
     expect(config.requiredSections).toEqual(['## Description', '## Testing']);
+  });
+
+  it('uses custom template_path when provided', () => {
+    mockGetInput.mockImplementation((key) =>
+      key === 'template_path' ? '.github/MY_TEMPLATE.md' : ''
+    );
+    const config = loadConfig();
+    expect(config.templatePath).toBe('.github/MY_TEMPLATE.md');
   });
 });
