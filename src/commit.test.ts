@@ -26,6 +26,12 @@ describe("parseCommitMessage", () => {
     expect(subject).toBe("fix: something");
     expect(body).toBe("");
   });
+
+  it("trims leading and trailing whitespace from subject and body", () => {
+    const { subject, body } = parseCommitMessage("feat: hello  \n\n  body with spaces  ");
+    expect(subject).toBe("feat: hello");
+    expect(body).toBe("body with spaces");
+  });
 });
 
 describe("checkConventionalCommit", () => {
@@ -79,5 +85,15 @@ describe("checkCommitMessages", () => {
     const commits = [makeCommit(), makeCommit({ sha: "def456" })];
     const result = checkCommitMessages(commits);
     expect(result.totalCommits).toBe(2);
+  });
+
+  it("accumulates violations across multiple commits", () => {
+    const commits = [
+      makeCommit({ message: "updated readme" }),
+      makeCommit({ sha: "def456", message: "fixed bug" }),
+    ];
+    const result = checkCommitMessages(commits, { requireConventional: true });
+    expect(result.passed).toBe(false);
+    expect(result.violations).toHaveLength(2);
   });
 });
